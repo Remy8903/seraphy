@@ -19,7 +19,7 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             ...$this->profileRules($this->user()->id),
-            'matric_no' => $this->matricNoRules(),
+            'matric_no' => $this->matricNoRules($this->user()->id, required: false),
         ];
     }
 }

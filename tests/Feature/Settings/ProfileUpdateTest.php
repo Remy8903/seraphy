@@ -98,3 +98,16 @@ test('matric number can be updated', function () {
 
     expect($user->refresh()->matric_no)->toBe('A180123');
 });
+
+test('matric number cannot be changed to one another student uses', function () {
+    User::factory()->create(['matric_no' => 'A180123']);
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'matric_no' => 'A180123',
+        ])
+        ->assertSessionHasErrors('matric_no');
+});

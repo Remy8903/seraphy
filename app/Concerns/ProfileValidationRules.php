@@ -54,8 +54,15 @@ trait ProfileValidationRules
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
-    protected function matricNoRules(): array
+    protected function matricNoRules(?int $userId = null, bool $required = true): array
     {
-        return ['nullable', 'string', 'max:20'];
+        return [
+            $required ? 'required' : 'nullable',
+            'string',
+            'max:20',
+            $userId === null
+                ? Rule::unique(User::class, 'matric_no')
+                : Rule::unique(User::class, 'matric_no')->ignore($userId),
+        ];
     }
 }

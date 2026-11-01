@@ -17,4 +17,21 @@ return [
         'hands_on' => 250,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Weekly Reminder
+    |--------------------------------------------------------------------------
+    |
+    | When students are emailed a reminder to fill in their log form. The
+    | day uses 0 (Sunday) to 6 (Saturday) and the time is interpreted in
+    | the given timezone.
+    |
+    */
+
+    'reminder' => [
+        'day' => 0,
+        'time' => '20:00',
+        'timezone' => 'Asia/Kuala_Lumpur',
+    ],
+
 ];

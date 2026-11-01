@@ -36,7 +36,7 @@ const user = computed(() => page.props.auth.user);
         <Heading
             variant="small"
             title="Profile"
-            description="Update your name and email address"
+            description="Update your name, email address and matric number"
         />
 
         <Form
@@ -71,6 +71,18 @@ const user = computed(() => page.props.auth.user);
                     placeholder="Email address"
                 />
                 <InputError class="mt-2" :message="errors.email" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="matric_no">Matric no.</Label>
+                <Input
+                    id="matric_no"
+                    class="mt-1 block w-full"
+                    name="matric_no"
+                    :default-value="user.matric_no ?? ''"
+                    placeholder="e.g. A180123"
+                />
+                <InputError class="mt-2" :message="errors.matric_no" />
             </div>
 
             <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">

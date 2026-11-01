@@ -48,4 +48,14 @@ trait ProfileValidationRules
                 : Rule::unique(User::class)->ignore($userId),
         ];
     }
+
+    /**
+     * Get the validation rules used to validate student matric numbers.
+     *
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function matricNoRules(): array
+    {
+        return ['nullable', 'string', 'max:20'];
+    }
 }

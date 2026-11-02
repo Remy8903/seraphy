@@ -194,6 +194,42 @@ describe('update', function () {
         expect($form->entries()->pluck('duration_minutes')->all())->toBe([90]);
     });
 
+    test('it keeps edited sessions as the same rows, removes dropped ones and adds new ones', function () {
+        $user = User::factory()->create();
+        $form = ClinicalLogForm::factory()->for($user)->create();
+        [$kept, $dropped] = ClinicalLogEntry::factory()->for($form, 'form')->count(2)->create();
+        $payload = validLogFormPayload();
+        $newEntry = $payload['entries'][0];
+
+        $this->actingAs($user)
+            ->put(route('clinical-hours.update', $form), validLogFormPayload([
+                'entries' => [
+                    [...$newEntry, 'id' => $kept->id, 'hours' => 2, 'minutes' => 0],
+                    [...$newEntry, 'id' => null, 'minutes' => 15],
+                ],
+            ]))
+            ->assertSessionHasNoErrors();
+
+        expect($kept->refresh()->duration_minutes)->toBe(120);
+        $this->assertModelMissing($dropped);
+        expect($form->entries()->pluck('duration_minutes', 'id')->all())->toHaveCount(2)->toHaveKey($kept->id);
+    });
+
+    test('it rejects session ids that belong to another form', function () {
+        $user = User::factory()->create();
+        $form = ClinicalLogForm::factory()->for($user)->create();
+        $otherEntry = ClinicalLogEntry::factory()->create();
+        $payload = validLogFormPayload();
+
+        $this->actingAs($user)
+            ->put(route('clinical-hours.update', $form), validLogFormPayload([
+                'entries' => [[...$payload['entries'][0], 'id' => $otherEntry->id]],
+            ]))
+            ->assertSessionHasErrors('entries.0.id');
+
+        expect($otherEntry->refresh()->clinical_log_form_id)->not->toBe($form->id);
+    });
+
     test('switching a log form to simple mode removes its sessions and placement details', function () {
         $user = User::factory()->create();
         $form = ClinicalLogForm::factory()->for($user)->create();

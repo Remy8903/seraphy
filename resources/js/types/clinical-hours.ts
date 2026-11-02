@@ -17,6 +17,8 @@ export type ClinicalLogFormOptions = {
 export type ClinicalLogMode = 'log_form' | 'simple';
 
 export type ClinicalLogEntryInput = {
+    /** Set for sessions already saved on the form, so edits keep the same row. */
+    id?: number | null;
     date: string;
     age_group: string;
     rn_no: string;

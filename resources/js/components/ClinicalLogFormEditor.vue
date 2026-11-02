@@ -75,6 +75,7 @@ function blankEntry(): ClinicalLogEntryInput {
     const previous = form.entries.at(-1);
 
     return {
+        id: null,
         date: '',
         age_group: previous?.age_group ?? '',
         rn_no: '',

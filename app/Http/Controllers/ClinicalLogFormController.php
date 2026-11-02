@@ -16,6 +16,7 @@ use App\Models\ClinicalLogForm;
 use App\Services\ClinicalHoursSummary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -74,7 +75,10 @@ class ClinicalLogFormController extends Controller
         DB::transaction(function () use ($request): void {
             $form = $request->user()->clinicalLogForms()->create($request->formAttributes());
 
-            $form->entries()->createMany($request->entryAttributes());
+            $form->entries()->createMany(array_map(
+                fn (array $entry): array => Arr::except($entry, 'id'),
+                $request->entryAttributes(),
+            ));
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Log form saved.')]);
@@ -100,8 +104,8 @@ class ClinicalLogFormController extends Controller
                 'semester' => $clinicalLogForm->semester,
                 'session_start_year' => $clinicalLogForm->session_start_year,
                 'days' => $clinicalLogForm->days ?? [],
-                'placement' => $clinicalLogForm->placement?->value ?? '',
-                'clinic_mode' => $clinicalLogForm->clinic_mode?->value ?? '',
+                'placement' => $clinicalLogForm->placement->value ?? '',
+                'clinic_mode' => $clinicalLogForm->clinic_mode->value ?? '',
                 'placement_name' => $clinicalLogForm->placement_name ?? '',
                 'supervisor_name' => $clinicalLogForm->supervisor_name ?? '',
                 'practicum_type' => $clinicalLogForm->practicum_type->value,
@@ -109,6 +113,7 @@ class ClinicalLogFormController extends Controller
                 'hours' => intdiv((int) $clinicalLogForm->simple_minutes, 60),
                 'minutes' => (int) $clinicalLogForm->simple_minutes % 60,
                 'entries' => $clinicalLogForm->entries->map(fn (ClinicalLogEntry $entry): array => [
+                    'id' => $entry->id,
                     'date' => $entry->date->toDateString(),
                     'age_group' => $entry->age_group->value,
                     'rn_no' => $entry->rn_no ?? '',
@@ -123,7 +128,10 @@ class ClinicalLogFormController extends Controller
     }
 
     /**
-     * Update a log form and replace its sessions, clearing them when switched to simple mode.
+     * Update a log form and sync its sessions, clearing them when switched to simple mode.
+     *
+     * Sessions are matched by id so that existing rows (and anything linked to them,
+     * such as game sessions) survive an edit.
      */
     public function update(ClinicalLogFormRequest $request, ClinicalLogForm $clinicalLogForm): RedirectResponse
     {
@@ -132,8 +140,22 @@ class ClinicalLogFormController extends Controller
         DB::transaction(function () use ($request, $clinicalLogForm): void {
             $clinicalLogForm->update($request->formAttributes());
 
-            $clinicalLogForm->entries()->delete();
-            $clinicalLogForm->entries()->createMany($request->entryAttributes());
+            $entries = $request->entryAttributes();
+            $existingEntries = $clinicalLogForm->entries()->get()->keyBy('id');
+
+            $clinicalLogForm->entries()
+                ->whereKeyNot(array_filter(array_column($entries, 'id')))
+                ->delete();
+
+            foreach ($entries as $entry) {
+                $attributes = Arr::except($entry, 'id');
+
+                if ($entry['id'] !== null && $existingEntries->has($entry['id'])) {
+                    $existingEntries->get($entry['id'])->update($attributes);
+                } else {
+                    $clinicalLogForm->entries()->create($attributes);
+                }
+            }
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Log form updated.')]);

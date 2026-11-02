@@ -59,6 +59,15 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* TheraTrack logo colours: violet into indigo, blue and cyan. */
+    --color-brand-violet: var(--brand-violet);
+    --color-brand-indigo: var(--brand-indigo);
+    --color-brand-blue: var(--brand-blue);
+    --color-brand-cyan: var(--brand-cyan);
+    --color-brand-soft: var(--brand-soft);
+    --color-brand-ink: var(--brand-ink);
+    --color-brand-chart: var(--brand-chart);
 }
 
 /*
@@ -124,6 +133,13 @@
     --sidebar-border: hsl(0 0% 91%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(0 0% 98%);
+    --brand-violet: #9466f0;
+    --brand-indigo: #5b3fd8;
+    --brand-blue: #1d74e3;
+    --brand-cyan: #5cc8f0;
+    --brand-soft: #f3f0ff;
+    --brand-ink: #4c32c4;
+    --brand-chart: #4f46e5;
 }
 
 .dark {
@@ -160,6 +176,13 @@
     --sidebar-border: hsl(0 0% 15.9%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
+    --brand-violet: #8b5cf6;
+    --brand-indigo: #5b3fd8;
+    --brand-blue: #2b7fe8;
+    --brand-cyan: #4cc0ec;
+    --brand-soft: rgb(91 63 216 / 0.16);
+    --brand-ink: #b9a8ff;
+    --brand-chart: #6366f1;
 }
 
 @layer base {

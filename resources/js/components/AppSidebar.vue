@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, Stethoscope } from '@lucide/vue';
+import {
+    BookOpen,
+    CloudOff,
+    FolderGit2,
+    Gamepad2,
+    LayoutGrid,
+    Stethoscope,
+    Users,
+} from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,8 +22,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { index as activities } from '@/actions/App/Http/Controllers/ActivityController';
+import { index as clients } from '@/actions/App/Http/Controllers/ClientController';
 import { index as clinicalHours } from '@/actions/App/Http/Controllers/ClinicalLogFormController';
-import { dashboard } from '@/routes';
+import { dashboard, offline } from '@/routes';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -28,6 +38,21 @@ const mainNavItems: NavItem[] = [
         title: 'Clinical Hours',
         href: clinicalHours(),
         icon: Stethoscope,
+    },
+    {
+        title: 'Clients',
+        href: clients(),
+        icon: Users,
+    },
+    {
+        title: 'Activities',
+        href: activities(),
+        icon: Gamepad2,
+    },
+    {
+        title: 'Offline play',
+        href: offline(),
+        icon: CloudOff,
     },
 ];
 

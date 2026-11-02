@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -63,5 +64,15 @@ class ClinicalLogEntry extends Model
     public function form(): BelongsTo
     {
         return $this->belongsTo(ClinicalLogForm::class, 'clinical_log_form_id');
+    }
+
+    /**
+     * Get the game sessions that were added to the log as this entry.
+     *
+     * @return HasMany<PlaySession, $this>
+     */
+    public function playSessions(): HasMany
+    {
+        return $this->hasMany(PlaySession::class);
     }
 }

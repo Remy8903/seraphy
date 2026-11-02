@@ -33,6 +33,8 @@
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/logo.png" type="image/png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="manifest" href="/build/manifest.webmanifest">
+        <meta name="theme-color" content="#ffffff">
 
         @fonts
 

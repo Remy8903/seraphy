@@ -11,6 +11,7 @@ use App\Enums\ClinicalHours\PracticumType;
 use App\Enums\ClinicalHours\SessionMode;
 use App\Enums\ClinicalHours\SessionType;
 use App\Enums\ClinicalHours\WeekDay;
+use App\Models\ClinicalLogForm;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -53,6 +54,9 @@ class ClinicalLogFormRequest extends FormRequest
             'placement_name' => ['required', 'string', 'max:255'],
             'supervisor_name' => ['required', 'string', 'max:255'],
             'entries' => ['required', 'array', 'min:1'],
+            'entries.*.id' => $this->logForm() instanceof ClinicalLogForm
+                ? ['nullable', 'integer', 'distinct', Rule::exists('clinical_log_entries', 'id')->where('clinical_log_form_id', $this->logForm()->id)]
+                : ['exclude'],
             'entries.*.date' => ['required', 'date'],
             'entries.*.age_group' => ['required', Rule::enum(AgeGroup::class)],
             'entries.*.rn_no' => ['nullable', 'string', 'max:50'],
@@ -135,6 +139,8 @@ class ClinicalLogFormRequest extends FormRequest
     /**
      * Get the validated entries with their duration converted to minutes.
      *
+     * Entries that already exist on the form carry their `id`; new entries have a null `id`.
+     *
      * @return list<array<string, mixed>>
      */
     public function entryAttributes(): array
@@ -144,6 +150,7 @@ class ClinicalLogFormRequest extends FormRequest
         }
 
         return array_map(fn (array $entry): array => [
+            'id' => isset($entry['id']) ? (int) $entry['id'] : null,
             'date' => $entry['date'],
             'age_group' => $entry['age_group'],
             'rn_no' => $entry['rn_no'] ?? null,
@@ -152,6 +159,16 @@ class ClinicalLogFormRequest extends FormRequest
             'diagnosis' => $entry['diagnosis'] ?? null,
             'duration_minutes' => (int) $entry['hours'] * 60 + (int) $entry['minutes'],
         ], array_values($this->validated('entries')));
+    }
+
+    /**
+     * Get the form being updated, or null when a new form is being created.
+     */
+    private function logForm(): ?ClinicalLogForm
+    {
+        $form = $this->route('clinicalLogForm');
+
+        return $form instanceof ClinicalLogForm ? $form : null;
     }
 
     /**

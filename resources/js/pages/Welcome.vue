@@ -73,10 +73,13 @@ import { register } from '@/routes';
                                 </span>
                             </span>
                             <span>
-                                <span class="font-medium">Session tracking</span>
+                                <span class="font-medium"
+                                    >Session tracking</span
+                                >
                                 <span
                                     class="block text-[#706f6c] dark:text-[#A1A09A]"
-                                    >Log every therapy session, goals and notes in one place.</span
+                                    >Log every therapy session, goals and notes
+                                    in one place.</span
                                 >
                             </span>
                         </li>
@@ -95,10 +98,13 @@ import { register } from '@/routes';
                                 </span>
                             </span>
                             <span>
-                                <span class="font-medium">Therapy activities</span>
+                                <span class="font-medium"
+                                    >Therapy activities</span
+                                >
                                 <span
                                     class="block text-[#706f6c] dark:text-[#A1A09A]"
-                                    >Run speech and language activities with clients during sessions.</span
+                                    >Run speech and language activities with
+                                    clients during sessions.</span
                                 >
                             </span>
                         </li>
@@ -117,10 +123,13 @@ import { register } from '@/routes';
                                 </span>
                             </span>
                             <span>
-                                <span class="font-medium">Progress monitoring</span>
+                                <span class="font-medium"
+                                    >Progress monitoring</span
+                                >
                                 <span
                                     class="block text-[#706f6c] dark:text-[#A1A09A]"
-                                    >See how each client improves over time.</span
+                                    >See how each client improves over
+                                    time.</span
                                 >
                             </span>
                         </li>
@@ -152,7 +161,9 @@ import { register } from '@/routes';
                 <div
                     class="relative -mb-px aspect-[335/364] w-full shrink-0 overflow-hidden rounded-t-lg bg-[#f3f0ff] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-[#130f24]"
                 >
-                    <div class="flex h-full w-full items-center justify-center p-12">
+                    <div
+                        class="flex h-full w-full items-center justify-center p-12"
+                    >
                         <img
                             src="/logo.png"
                             alt="TheraTrack"

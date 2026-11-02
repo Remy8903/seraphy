@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Storage;
  * @property string $word
  * @property string|null $emoji
  * @property string|null $image_path
+ * @property string|null $sound_path
  * @property string|null $target_sound
  * @property WordPosition|null $word_position
  * @property string|null $category
@@ -39,6 +40,7 @@ use Illuminate\Support\Facades\Storage;
     'word',
     'emoji',
     'image_path',
+    'sound_path',
     'target_sound',
     'word_position',
     'category',
@@ -89,9 +91,17 @@ class ContentItem extends Model
     }
 
     /**
+     * Get the public URL of the uploaded sound clip, if any.
+     */
+    public function soundUrl(): ?string
+    {
+        return $this->sound_path ? Storage::disk('public')->url($this->sound_path) : null;
+    }
+
+    /**
      * Get the fields a game needs to show the word as a picture card.
      *
-     * @return array{id: int, word: string, emoji: string|null, image_url: string|null}
+     * @return array{id: int, word: string, emoji: string|null, image_url: string|null, sound_url: string|null}
      */
     public function toPicture(): array
     {
@@ -100,6 +110,7 @@ class ContentItem extends Model
             'word' => $this->word,
             'emoji' => $this->emoji,
             'image_url' => $this->imageUrl(),
+            'sound_url' => $this->soundUrl(),
         ];
     }
 

@@ -54,6 +54,10 @@ class ContentItemController extends Controller
             $item->image_path = $this->storeImage($request->file('image'));
         }
 
+        if ($request->hasFile('sound')) {
+            $item->sound_path = $this->storeSound($request->file('sound'));
+        }
+
         $item->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Word added.')]);
@@ -74,6 +78,13 @@ class ContentItemController extends Controller
             $this->deleteImage($contentItem);
             $contentItem->image_path = $request->hasFile('image')
                 ? $this->storeImage($request->file('image'))
+                : null;
+        }
+
+        if ($request->hasFile('sound') || $request->boolean('remove_sound')) {
+            $this->deleteSound($contentItem);
+            $contentItem->sound_path = $request->hasFile('sound')
+                ? $this->storeSound($request->file('sound'))
                 : null;
         }
 
@@ -104,6 +115,7 @@ class ContentItemController extends Controller
         }
 
         $this->deleteImage($contentItem);
+        $this->deleteSound($contentItem);
         $contentItem->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Word deleted.')]);
@@ -143,6 +155,32 @@ class ContentItemController extends Controller
         }
 
         return $path;
+    }
+
+    /**
+     * Store an uploaded sound clip on the public disk and get its path.
+     *
+     * @throws RuntimeException When the file could not be written.
+     */
+    private function storeSound(UploadedFile $sound): string
+    {
+        $path = $sound->store('content-items/sounds', 'public');
+
+        if ($path === false) {
+            throw new RuntimeException('The sound could not be saved.');
+        }
+
+        return $path;
+    }
+
+    /**
+     * Remove the word's uploaded sound clip from storage.
+     */
+    private function deleteSound(ContentItem $contentItem): void
+    {
+        if ($contentItem->sound_path !== null) {
+            Storage::disk('public')->delete($contentItem->sound_path);
+        }
     }
 
     /**

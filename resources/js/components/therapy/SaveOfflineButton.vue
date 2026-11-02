@@ -67,12 +67,15 @@ async function save(): Promise<void> {
             'key' | 'owner_id'
         >;
 
-        // Word pictures and the background, so the game looks the same offline.
+        // Word pictures, animal sounds and the background, so the game works the same offline.
         const pictureUrls = [
             ...new Set(
                 content.cards
                     .flatMap((card) => [card.word, card.pair])
-                    .map((picture) => picture?.image_url)
+                    .flatMap((picture) => [
+                        picture?.image_url,
+                        picture?.sound_url,
+                    ])
                     .concat(content.activity.background_url)
                     .filter((url): url is string => !!url),
             ),

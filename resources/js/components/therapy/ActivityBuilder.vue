@@ -99,6 +99,7 @@ const usesDirections = computed(
     () => selectedGameType.value?.uses_directions ?? false,
 );
 const isBalloonVoice = computed(() => form.game_type === 'balloon_voice');
+const usesSounds = computed(() => selectedGameType.value?.uses_sounds ?? false);
 const maxBoardSize = 8;
 
 const trialCountLabel = computed(() => {
@@ -111,7 +112,9 @@ const trialCountLabel = computed(() => {
         : 'Tries per session';
 });
 
-const fieldSizes = ['3', '4', '5', '6'];
+const fieldSizes = computed(() =>
+    usesSounds.value ? ['2', '3', '4'] : ['3', '4', '5', '6'],
+);
 const fieldSize = computed({
     get: () => String(form.settings.field_size ?? 4),
     set: (value: string) => {
@@ -125,7 +128,13 @@ watch(
     () => form.game_type,
     () => {
         if (isFindIt.value) {
-            form.settings.field_size ??= 4;
+            const size = Number(form.settings.field_size ?? 4);
+            form.settings.field_size = size < 3 ? 4 : size;
+        }
+
+        if (usesSounds.value) {
+            const size = Number(form.settings.field_size ?? 3);
+            form.settings.field_size = size > 4 ? 3 : size;
         }
 
         if (isFindIt.value || usesDirections.value) {
@@ -263,6 +272,7 @@ const filteredLibrary = computed(() => {
 
     return languageLibrary.value.filter(
         (item) =>
+            (!usesSounds.value || !!item.sound_url) &&
             (!usesCategories.value ||
                 (chosenGroups.value.length > 0 &&
                     !!item.category &&
@@ -796,7 +806,7 @@ function submit(): void {
                 </div>
 
                 <div
-                    v-if="isFindIt"
+                    v-if="isFindIt || usesSounds"
                     class="flex flex-wrap items-start gap-x-6 gap-y-3 rounded-md border p-3"
                 >
                     <div class="grid gap-2">
@@ -823,7 +833,15 @@ function submit(): void {
                             "
                         />
                     </div>
-                    <div class="grid gap-1">
+                    <div v-if="usesSounds" class="grid max-w-md gap-1 text-sm">
+                        <p class="font-medium">How it plays</p>
+                        <p class="text-muted-foreground">
+                            Each animal&rsquo;s sound plays by itself, and the
+                            child taps the animal that makes it. Tap 🔊 to play
+                            it again.
+                        </p>
+                    </div>
+                    <div v-if="isFindIt" class="grid gap-1">
                         <Label
                             class="flex items-center gap-2 font-normal"
                             :class="{ 'opacity-60': !speech.hasVoice.value }"
@@ -866,6 +884,10 @@ function submit(): void {
                         </template>
                         <template v-else-if="usesDirections">
                             Tap 4 to 8 pictures to put them on the board.
+                        </template>
+                        <template v-else-if="usesSounds">
+                            Only pictures with a sound are shown. Tap at least 2
+                            animals to add them.
                         </template>
                         <template v-else-if="usesStories">
                             Tap pictures in story order to add them to story
@@ -994,6 +1016,22 @@ function submit(): void {
                     </div>
 
                     <p
+                        v-if="usesSounds && filteredLibrary.length === 0"
+                        class="rounded-md border border-dashed p-4 text-sm text-muted-foreground"
+                    >
+                        No pictures in this language have a sound yet. Add an
+                        animal in the
+                        <Link
+                            :href="
+                                library({ query: { language: form.language } })
+                            "
+                            class="font-medium text-foreground underline underline-offset-4"
+                            >word library</Link
+                        >
+                        and upload its sound, such as a cow mooing.
+                    </p>
+
+                    <p
                         v-if="usesCategories && chosenGroups.length === 0"
                         class="text-sm text-muted-foreground"
                     >
@@ -1033,7 +1071,13 @@ function submit(): void {
                                     show-word
                                 />
                                 <span
-                                    v-if="item.target_sound"
+                                    v-if="usesSounds"
+                                    class="text-[10px] text-muted-foreground"
+                                >
+                                    🔊 sound
+                                </span>
+                                <span
+                                    v-else-if="item.target_sound"
                                     class="text-[10px] text-muted-foreground"
                                 >
                                     /{{ item.target_sound }}/

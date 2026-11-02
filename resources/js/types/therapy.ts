@@ -8,7 +8,8 @@ export type GameTypeValue =
     | 'story_sequence'
     | 'sort_it'
     | 'follow_directions'
-    | 'balloon_voice';
+    | 'balloon_voice'
+    | 'animal_sound';
 
 export type VoiceLevelValue = 'quiet' | 'normal' | 'loud';
 
@@ -19,6 +20,8 @@ export type Picture = {
     word: string;
     emoji: string | null;
     image_url: string | null;
+    /** Sound clip the animal sounds game plays; missing on content saved offline before sounds existed. */
+    sound_url?: string | null;
 };
 
 export type ClientListItem = {
@@ -148,6 +151,7 @@ export type GameTypeOption = SelectOption & {
     uses_words: boolean;
     uses_categories: boolean;
     uses_directions: boolean;
+    uses_sounds: boolean;
 };
 
 export type StickerSetOption = SelectOption & {

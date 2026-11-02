@@ -119,12 +119,19 @@ function optionsFor(card: GameCard, target: Picture): Picture[] {
         return shuffled([card.word, card.pair]);
     }
 
-    if (props.activity.game_type === 'find_it') {
+    if (
+        props.activity.game_type === 'find_it' ||
+        props.activity.game_type === 'animal_sound'
+    ) {
+        const defaultFieldSize = props.activity.game_type === 'find_it' ? 4 : 3;
         const distractors = shuffled(
             props.cards
                 .map((other) => other.word)
                 .filter((word) => word.id !== target.id),
-        ).slice(0, (props.activity.settings.field_size ?? 4) - 1);
+        ).slice(
+            0,
+            (props.activity.settings.field_size ?? defaultFieldSize) - 1,
+        );
 
         return shuffled([target, ...distractors]);
     }
@@ -247,6 +254,8 @@ function extendDeck(): void {
 /** Extra props that only some games use. */
 const gameProps = computed(() => {
     switch (props.activity.game_type) {
+        case 'animal_sound':
+            return { language: props.activity.language };
         case 'find_it':
         case 'follow_directions':
             return {

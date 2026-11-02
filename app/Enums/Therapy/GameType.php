@@ -15,6 +15,7 @@ enum GameType: string
     case SortIt = 'sort_it';
     case FollowDirections = 'follow_directions';
     case BalloonVoice = 'balloon_voice';
+    case AnimalSound = 'animal_sound';
 
     /**
      * Get the label shown to the clinician.
@@ -29,6 +30,7 @@ enum GameType: string
             self::SortIt => 'Sort it',
             self::FollowDirections => 'Follow directions',
             self::BalloonVoice => 'Balloon voice',
+            self::AnimalSound => 'Animal sounds',
         };
     }
 
@@ -45,6 +47,7 @@ enum GameType: string
             self::SortIt => 'Word groups: the child drags each picture into the group it belongs to.',
             self::FollowDirections => 'Understanding instructions: you give a direction and the child touches the pictures in order.',
             self::BalloonVoice => 'Voice and loudness: the child keeps their voice in the target range to lift a balloon.',
+            self::AnimalSound => 'Listening: an animal sound plays and the child taps the animal that makes it.',
         };
     }
 
@@ -70,6 +73,14 @@ enum GameType: string
     public function usesCategories(): bool
     {
         return $this === self::SortIt;
+    }
+
+    /**
+     * Determine whether each picture is played as a sound clip the child listens to.
+     */
+    public function usesSounds(): bool
+    {
+        return $this === self::AnimalSound;
     }
 
     /**

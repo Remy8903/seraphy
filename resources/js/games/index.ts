@@ -1,5 +1,6 @@
 import type { Component } from 'vue';
 import type { GameTypeValue } from '@/types';
+import AnimalSound from './AnimalSound.vue';
 import BalloonVoice from './BalloonVoice.vue';
 import FindIt from './FindIt.vue';
 import FollowDirections from './FollowDirections.vue';
@@ -22,4 +23,5 @@ export const games: Record<GameTypeValue, Component> = {
     sort_it: SortIt,
     follow_directions: FollowDirections,
     balloon_voice: BalloonVoice,
+    animal_sound: AnimalSound,
 };

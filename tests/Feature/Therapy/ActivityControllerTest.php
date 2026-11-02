@@ -133,6 +133,53 @@ test('a find it activity needs at least 3 words and a field of 3 to 6 pictures',
     expect(Activity::count())->toBe(0);
 });
 
+test('an animal sounds activity stores how many animals to choose from', function () {
+    $user = User::factory()->create();
+    $animals = ContentItem::factory()->starter()->count(2)->create(['sound_path' => 'content-items/sounds/moo.mp3']);
+
+    $this->actingAs($user)
+        ->post(route('activities.store'), validActivityPayload(
+            $animals->map(fn (ContentItem $animal): array => ['content_item_id' => $animal->id])->all(),
+            [
+                'game_type' => 'animal_sound',
+                'settings' => ['trial_count' => 10, 'shuffle' => true, 'show_word_text' => false, 'field_size' => 2],
+            ],
+        ))
+        ->assertSessionHasNoErrors();
+
+    expect($user->activities()->sole()->settings)->toMatchArray(['field_size' => 2]);
+});
+
+test('an animal sounds activity needs animals with sounds and 2 to 4 pictures to choose from', function () {
+    $user = User::factory()->create();
+    $withSound = ContentItem::factory()->starter()->create(['sound_path' => 'content-items/sounds/moo.mp3']);
+    $silent = ContentItem::factory()->starter()->create(['sound_path' => null]);
+
+    $this->actingAs($user)
+        ->post(route('activities.store'), validActivityPayload(
+            [['content_item_id' => $withSound->id], ['content_item_id' => $silent->id]],
+            [
+                'game_type' => 'animal_sound',
+                'settings' => ['trial_count' => 10, 'shuffle' => true, 'show_word_text' => false, 'field_size' => 3],
+            ],
+        ))
+        ->assertSessionHasErrors(['items' => 'Every animal needs a sound. Add one to the picture in the word library.']);
+
+    $this->post(route('activities.store'), validActivityPayload(
+        [['content_item_id' => $withSound->id]],
+        [
+            'game_type' => 'animal_sound',
+            'settings' => ['trial_count' => 10, 'shuffle' => true, 'show_word_text' => false, 'field_size' => 5],
+        ],
+    ))
+        ->assertSessionHasErrors([
+            'items' => 'Add at least 2 animals so the child has pictures to choose from.',
+            'settings.field_size',
+        ]);
+
+    expect(Activity::count())->toBe(0);
+});
+
 test('a story sequence activity stores each story\'s cards in order', function () {
     $user = User::factory()->create();
     $cards = ContentItem::factory()->starter()->count(4)->create();

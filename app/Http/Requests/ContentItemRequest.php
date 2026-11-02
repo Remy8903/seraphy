@@ -26,6 +26,14 @@ class ContentItemRequest extends FormRequest
             'emoji' => ['nullable', 'string', 'max:16'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4000,max_height=4000'],
             'remove_image' => ['boolean'],
+            'sound' => [
+                'nullable',
+                'file',
+                'max:2048',
+                'extensions:mp3,wav,m4a,aac,ogg',
+                'mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/wave,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,video/mp4',
+            ],
+            'remove_sound' => ['boolean'],
             'target_sound' => ['nullable', 'string', 'max:10', 'regex:/^[a-z]+$/'],
             'word_position' => ['nullable', Rule::enum(WordPosition::class)],
             'category' => ['nullable', 'string', 'max:50'],
@@ -41,6 +49,9 @@ class ContentItemRequest extends FormRequest
     {
         return [
             'target_sound.regex' => 'Write the target sound in lowercase letters, e.g. s, k or ng.',
+            'sound.extensions' => 'Upload the sound as an MP3, WAV, M4A, AAC or OGG file.',
+            'sound.mimetypes' => 'Upload the sound as an MP3, WAV, M4A, AAC or OGG file.',
+            'sound.max' => 'The sound must be 2 MB or smaller. A few seconds is enough.',
         ];
     }
 
@@ -77,7 +88,7 @@ class ContentItemRequest extends FormRequest
     public function contentItemAttributes(): array
     {
         return [
-            ...$this->safe()->except(['image', 'remove_image']),
+            ...$this->safe()->except(['image', 'remove_image', 'sound', 'remove_sound']),
             'target_sound' => $this->validated('target_sound'),
             'word_position' => $this->validated('word_position'),
             'category' => $this->validated('category'),

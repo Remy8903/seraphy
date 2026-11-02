@@ -235,6 +235,7 @@ class ActivityController extends Controller
                     'uses_words' => $gameType->usesWords(),
                     'uses_categories' => $gameType->usesCategories(),
                     'uses_directions' => $gameType->usesDirections(),
+                    'uses_sounds' => $gameType->usesSounds(),
                 ], GameType::cases()),
                 'languages' => Language::options(),
                 'wordPositions' => WordPosition::options(),

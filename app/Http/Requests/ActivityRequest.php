@@ -32,6 +32,7 @@ class ActivityRequest extends FormRequest
         $usesCategories = $gameType?->usesCategories() ?? false;
         $usesDirections = $gameType?->usesDirections() ?? false;
         $isFindIt = $gameType === GameType::FindIt;
+        $usesSounds = $gameType?->usesSounds() ?? false;
         $isBalloonVoice = $gameType === GameType::BalloonVoice;
         [$minItems, $maxItems] = $this->itemLimits();
 
@@ -49,7 +50,11 @@ class ActivityRequest extends FormRequest
                 'nullable',
                 Rule::enum(StickerSet::class),
             ],
-            'settings.field_size' => $isFindIt ? ['required', 'integer', 'between:3,6'] : ['exclude'],
+            'settings.field_size' => match (true) {
+                $isFindIt => ['required', 'integer', 'between:3,6'],
+                $usesSounds => ['required', 'integer', 'between:2,4'],
+                default => ['exclude'],
+            },
             'settings.speak_word' => $isFindIt || $usesDirections ? ['required', 'boolean'] : ['exclude'],
             'settings.categories' => $usesCategories ? ['required', 'array', 'min:2', 'max:3'] : ['exclude'],
             'settings.categories.*' => $usesCategories ? ['required', 'string', 'max:50', 'distinct'] : ['exclude'],
@@ -89,6 +94,7 @@ class ActivityRequest extends FormRequest
         $itemsMessage = match ($this->gameType()) {
             GameType::FindIt => 'Add at least 3 words so the child has pictures to choose from.',
             GameType::FollowDirections => 'Put 4 to 8 pictures on the board.',
+            GameType::AnimalSound => 'Add at least 2 animals so the child has pictures to choose from.',
             default => 'Add at least one word to the activity.',
         };
 
@@ -130,6 +136,7 @@ class ActivityRequest extends FormRequest
                     GameType::StorySequence => $this->validateStories($validator),
                     GameType::SortIt => $this->validateSortingGroups($validator),
                     GameType::FollowDirections => $this->validateDirections($validator),
+                    GameType::AnimalSound => $this->validateSounds($validator),
                     default => null,
                 };
             },
@@ -154,7 +161,7 @@ class ActivityRequest extends FormRequest
                 'show_word_text' => (bool) $this->validated('settings.show_word_text'),
                 'reward_every' => $rewardEvery,
                 ...($rewardEvery > 0 ? ['sticker_set' => $this->validated('settings.sticker_set')] : []),
-                ...($gameType === GameType::FindIt ? [
+                ...($gameType === GameType::FindIt || $gameType === GameType::AnimalSound ? [
                     'field_size' => (int) $this->validated('settings.field_size'),
                 ] : []),
                 ...($gameType === GameType::FindIt || $gameType === GameType::FollowDirections ? [
@@ -271,6 +278,21 @@ class ActivityRequest extends FormRequest
     }
 
     /**
+     * Require every animal to have an uploaded sound clip to play.
+     */
+    private function validateSounds(Validator $validator): void
+    {
+        $hasSilentPicture = ContentItem::query()
+            ->whereKey(array_column($this->input('items', []), 'content_item_id'))
+            ->whereNull('sound_path')
+            ->exists();
+
+        if ($hasSilentPicture) {
+            $validator->errors()->add('items', 'Every animal needs a sound. Add one to the picture in the word library.');
+        }
+    }
+
+    /**
      * Get the fewest and most words the chosen game allows.
      *
      * @return array{0: int, 1: int}
@@ -280,6 +302,7 @@ class ActivityRequest extends FormRequest
         return match ($this->gameType()) {
             GameType::FindIt => [3, 100],
             GameType::FollowDirections => [4, 8],
+            GameType::AnimalSound => [2, 100],
             default => [1, 100],
         };
     }

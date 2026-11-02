@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, useForm } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Trash2 } from '@lucide/vue';
+import { Pencil, Plus, Search, Trash2, Volume2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import {
     destroy,
@@ -34,6 +34,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { useSoundClip } from '@/composables/useSoundClip';
 import type { LibraryItem, SelectOption } from '@/types';
 
 defineOptions({
@@ -94,6 +95,8 @@ const wordForm = useForm({
     emoji: '',
     image: null as File | null,
     remove_image: false,
+    sound: null as File | null,
+    remove_sound: false,
     target_sound: '',
     word_position: noPosition,
     category: '',
@@ -107,6 +110,8 @@ function openNewWord(): void {
         emoji: '',
         image: null,
         remove_image: false,
+        sound: null,
+        remove_sound: false,
         target_sound: '',
         word_position: noPosition,
         category: '',
@@ -124,6 +129,8 @@ function openEditWord(item: LibraryItem): void {
         emoji: item.emoji ?? '',
         image: null,
         remove_image: false,
+        sound: null,
+        remove_sound: false,
         target_sound: item.target_sound ?? '',
         word_position: item.word_position ?? noPosition,
         category: item.category ?? '',
@@ -136,6 +143,12 @@ function openEditWord(item: LibraryItem): void {
 function selectImage(event: Event): void {
     wordForm.image = (event.target as HTMLInputElement).files?.[0] ?? null;
 }
+
+function selectSound(event: Event): void {
+    wordForm.sound = (event.target as HTMLInputElement).files?.[0] ?? null;
+}
+
+const clip = useSoundClip();
 
 function saveWord(): void {
     const editing = editingItem.value;
@@ -272,6 +285,17 @@ const itemToDelete = ref<LibraryItem | null>(null);
                             </Badge>
                             <Badge v-if="!item.is_starter">Mine</Badge>
                         </div>
+                        <Button
+                            v-if="item.sound_url"
+                            variant="outline"
+                            size="sm"
+                            class="h-7 text-xs"
+                            :aria-label="`Play the sound of ${item.word}`"
+                            @click="clip.play(item.sound_url)"
+                        >
+                            <Volume2 class="size-3.5" />
+                            Sound
+                        </Button>
                         <div
                             v-if="!item.is_starter"
                             class="absolute top-1 right-1 flex gap-0.5"
@@ -381,6 +405,42 @@ const itemToDelete = ref<LibraryItem | null>(null);
                         <Checkbox v-model="wordForm.remove_image" />
                         Remove the current picture
                     </Label>
+
+                    <div class="grid gap-2">
+                        <Label for="sound">Sound (optional)</Label>
+                        <Input
+                            id="sound"
+                            type="file"
+                            accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,.mp3,.wav,.m4a,.aac,.ogg"
+                            :aria-invalid="!!wordForm.errors.sound"
+                            @change="selectSound"
+                        />
+                        <p class="text-xs text-muted-foreground">
+                            For the Animal sounds game: a short clip of the
+                            animal, such as a cow mooing. MP3, WAV, M4A, AAC or
+                            OGG, up to 2 MB. Never record a client.
+                        </p>
+                        <InputError :message="wordForm.errors.sound" />
+                    </div>
+
+                    <div
+                        v-if="editingItem?.sound_url"
+                        class="flex flex-wrap items-center gap-3"
+                    >
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            @click="clip.play(editingItem.sound_url)"
+                        >
+                            <Volume2 />
+                            Play current sound
+                        </Button>
+                        <Label class="flex items-center gap-2 font-normal">
+                            <Checkbox v-model="wordForm.remove_sound" />
+                            Remove the current sound
+                        </Label>
+                    </div>
 
                     <div class="grid grid-cols-3 gap-4">
                         <div class="grid gap-2">

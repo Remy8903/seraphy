@@ -22,6 +22,8 @@ class ClinicalLogFormPdfController extends Controller
     {
         Gate::authorize('view', $clinicalLogForm);
 
+        abort_if($clinicalLogForm->isSimple(), 404);
+
         $clinicalLogForm->load(['user', 'entries']);
 
         $pages = $clinicalLogForm->entries->chunk(self::ROWS_PER_PAGE)->values();

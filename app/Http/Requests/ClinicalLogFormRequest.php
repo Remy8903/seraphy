@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\ClinicalHours\AgeGroup;
 use App\Enums\ClinicalHours\ClinicMode;
 use App\Enums\ClinicalHours\HoursType;
+use App\Enums\ClinicalHours\LogMode;
 use App\Enums\ClinicalHours\PlacementType;
 use App\Enums\ClinicalHours\PracticumType;
 use App\Enums\ClinicalHours\SessionMode;
@@ -25,18 +26,32 @@ class ClinicalLogFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
+            'mode' => ['required', Rule::enum(LogMode::class)],
             'year' => ['required', 'integer', 'between:1,4'],
             'semester' => ['required', 'integer', 'between:1,2'],
             'session_start_year' => ['required', 'integer', 'between:2000,2100'],
+            'practicum_type' => ['required', Rule::enum(PracticumType::class)],
+            'hours_type' => ['required', Rule::enum(HoursType::class)],
+        ];
+
+        if ($this->isSimpleMode()) {
+            return [
+                ...$rules,
+                'placement_name' => ['nullable', 'string', 'max:255'],
+                'hours' => ['required', 'integer', 'between:0,9999'],
+                'minutes' => ['required', 'integer', 'between:0,59'],
+            ];
+        }
+
+        return [
+            ...$rules,
             'days' => ['required', 'array', 'min:1'],
             'days.*' => ['required', 'distinct', Rule::enum(WeekDay::class)],
             'placement' => ['required', Rule::enum(PlacementType::class)],
             'clinic_mode' => ['required', Rule::enum(ClinicMode::class)],
             'placement_name' => ['required', 'string', 'max:255'],
             'supervisor_name' => ['required', 'string', 'max:255'],
-            'practicum_type' => ['required', Rule::enum(PracticumType::class)],
-            'hours_type' => ['required', Rule::enum(HoursType::class)],
             'entries' => ['required', 'array', 'min:1'],
             'entries.*.date' => ['required', 'date'],
             'entries.*.age_group' => ['required', Rule::enum(AgeGroup::class)],
@@ -71,16 +86,20 @@ class ClinicalLogFormRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
+                if ($this->isSimpleMode()) {
+                    if ($this->isZeroDuration($validator, 'hours', 'minutes')) {
+                        $validator->errors()->add('minutes', 'Enter at least one minute of clinical hours.');
+                    }
+
+                    return;
+                }
+
                 if ($validator->errors()->has('entries')) {
                     return;
                 }
 
-                foreach ($this->input('entries', []) as $index => $entry) {
-                    if ($validator->errors()->hasAny(["entries.{$index}.hours", "entries.{$index}.minutes"])) {
-                        continue;
-                    }
-
-                    if ((int) $entry['hours'] === 0 && (int) $entry['minutes'] === 0) {
+                foreach (array_keys($this->input('entries', [])) as $index) {
+                    if ($this->isZeroDuration($validator, "entries.{$index}.hours", "entries.{$index}.minutes")) {
                         $validator->errors()->add("entries.{$index}.minutes", 'The session must last at least one minute.');
                     }
                 }
@@ -89,13 +108,28 @@ class ClinicalLogFormRequest extends FormRequest
     }
 
     /**
-     * Get the validated form header attributes.
+     * Get the validated form header attributes, clearing the fields the chosen mode does not use.
      *
      * @return array<string, mixed>
      */
     public function formAttributes(): array
     {
-        return $this->safe()->except('entries');
+        if ($this->isSimpleMode()) {
+            return [
+                ...$this->safe()->except(['hours', 'minutes']),
+                'placement_name' => $this->validated('placement_name'),
+                'days' => null,
+                'placement' => null,
+                'clinic_mode' => null,
+                'supervisor_name' => null,
+                'simple_minutes' => (int) $this->validated('hours') * 60 + (int) $this->validated('minutes'),
+            ];
+        }
+
+        return [
+            ...$this->safe()->except('entries'),
+            'simple_minutes' => null,
+        ];
     }
 
     /**
@@ -105,6 +139,10 @@ class ClinicalLogFormRequest extends FormRequest
      */
     public function entryAttributes(): array
     {
+        if ($this->isSimpleMode()) {
+            return [];
+        }
+
         return array_map(fn (array $entry): array => [
             'date' => $entry['date'],
             'age_group' => $entry['age_group'],
@@ -114,5 +152,25 @@ class ClinicalLogFormRequest extends FormRequest
             'diagnosis' => $entry['diagnosis'] ?? null,
             'duration_minutes' => (int) $entry['hours'] * 60 + (int) $entry['minutes'],
         ], array_values($this->validated('entries')));
+    }
+
+    /**
+     * Determine whether the student keyed in the hours directly instead of logging sessions.
+     */
+    private function isSimpleMode(): bool
+    {
+        return $this->enum('mode', LogMode::class) === LogMode::Simple;
+    }
+
+    /**
+     * Determine whether a duration is zero hours and zero minutes, skipping fields that already failed validation.
+     */
+    private function isZeroDuration(Validator $validator, string $hoursKey, string $minutesKey): bool
+    {
+        if ($validator->errors()->hasAny([$hoursKey, $minutesKey])) {
+            return false;
+        }
+
+        return (int) $this->input($hoursKey) === 0 && (int) $this->input($minutesKey) === 0;
     }
 }

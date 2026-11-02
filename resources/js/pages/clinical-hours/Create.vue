@@ -31,6 +31,7 @@ defineProps<{
 const today = new Date();
 
 const initialValues: ClinicalLogFormInput = {
+    mode: 'log_form',
     year: '',
     semester: '',
     session_start_year:
@@ -43,6 +44,8 @@ const initialValues: ClinicalLogFormInput = {
     practicum_type: '',
     hours_type: '',
     entries: [],
+    hours: 0,
+    minutes: 0,
 };
 </script>
 
@@ -52,7 +55,7 @@ const initialValues: ClinicalLogFormInput = {
     <div class="flex flex-1 flex-col gap-6 p-4">
         <Heading
             title="New clinical log form"
-            description="Fill in one form per placement and hours type, just like the paper KSP log form"
+            description="Log each session like the paper KSP form, or switch to simple mode and key in your hours"
         />
 
         <ClinicalLogFormEditor
@@ -60,6 +63,7 @@ const initialValues: ClinicalLogFormInput = {
             :initial-values="initialValues"
             :action="store()"
             submit-label="Save log form"
+            remembers-mode
         />
     </div>
 </template>

@@ -50,6 +50,10 @@ defineProps<{
 
 const formToDelete = ref<ClinicalLogFormListItem | null>(null);
 
+function formTitle(form: ClinicalLogFormListItem): string {
+    return form.placement_name || 'Simple entry';
+}
+
 function closeDeleteDialog(open: boolean): void {
     if (!open) {
         formToDelete.value = null;
@@ -280,13 +284,19 @@ function closeDeleteDialog(open: boolean): void {
                                     </td>
                                     <td class="px-2 py-2">
                                         <div class="font-medium">
-                                            {{ form.placement_name }}
+                                            {{ formTitle(form) }}
                                         </div>
                                         <div
                                             class="text-xs text-muted-foreground"
                                         >
-                                            {{ form.practicum_type }} ·
-                                            {{ form.supervisor_name }}
+                                            {{
+                                                [
+                                                    form.practicum_type,
+                                                    form.supervisor_name,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' · ')
+                                            }}
                                         </div>
                                     </td>
                                     <td class="px-2 py-2">
@@ -307,17 +317,25 @@ function closeDeleteDialog(open: boolean): void {
                                         <div
                                             class="text-xs text-muted-foreground"
                                         >
-                                            {{ form.entries_count }}
-                                            {{
-                                                form.entries_count === 1
-                                                    ? 'session'
-                                                    : 'sessions'
-                                            }}
+                                            <template
+                                                v-if="form.mode === 'simple'"
+                                            >
+                                                Keyed in
+                                            </template>
+                                            <template v-else>
+                                                {{ form.entries_count }}
+                                                {{
+                                                    form.entries_count === 1
+                                                        ? 'session'
+                                                        : 'sessions'
+                                                }}
+                                            </template>
                                         </div>
                                     </td>
                                     <td class="py-2 pl-2">
                                         <div class="flex justify-end gap-1">
                                             <Button
+                                                v-if="form.mode === 'log_form'"
                                                 variant="ghost"
                                                 size="icon"
                                                 as-child
@@ -326,7 +344,7 @@ function closeDeleteDialog(open: boolean): void {
                                                     :href="
                                                         downloadPdf.url(form.id)
                                                     "
-                                                    :aria-label="`Download PDF for ${form.placement_name}`"
+                                                    :aria-label="`Download PDF for ${formTitle(form)}`"
                                                 >
                                                     <Download />
                                                 </a>
@@ -338,7 +356,7 @@ function closeDeleteDialog(open: boolean): void {
                                             >
                                                 <Link
                                                     :href="edit(form.id)"
-                                                    :aria-label="`Edit ${form.placement_name}`"
+                                                    :aria-label="`Edit ${formTitle(form)}`"
                                                 >
                                                     <Pencil />
                                                 </Link>
@@ -346,7 +364,7 @@ function closeDeleteDialog(open: boolean): void {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                :aria-label="`Delete ${form.placement_name}`"
+                                                :aria-label="`Delete ${formTitle(form)}`"
                                                 @click="formToDelete = form"
                                             >
                                                 <Trash2 />
@@ -373,14 +391,14 @@ function closeDeleteDialog(open: boolean): void {
                     <DialogHeader class="space-y-3">
                         <DialogTitle>Delete this log form?</DialogTitle>
                         <DialogDescription>
-                            {{ formToDelete.placement_name }} (Y{{
+                            {{ formTitle(formToDelete) }} (Y{{
                                 formToDelete.year
                             }}
                             Sem {{ formToDelete.semester }},
                             {{ formToDelete.hours_type_label }}) and its
-                            {{ formatDuration(formToDelete.total_minutes) }} of
-                            sessions will be removed from your tracker. This
-                            cannot be undone.
+                            {{ formatDuration(formToDelete.total_minutes) }}
+                            will be removed from your tracker. This cannot be
+                            undone.
                         </DialogDescription>
                     </DialogHeader>
 

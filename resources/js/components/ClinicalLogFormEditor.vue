@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, useForm, usePage } from '@inertiajs/vue3';
-import { Plus, Trash2 } from '@lucide/vue';
-import { computed } from 'vue';
+import { ClipboardList, Clock, Plus, Trash2 } from '@lucide/vue';
+import { computed, onMounted } from 'vue';
 import { index } from '@/actions/App/Http/Controllers/ClinicalLogFormController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import type {
     ClinicalLogEntryInput,
     ClinicalLogFormInput,
     ClinicalLogFormOptions,
+    ClinicalLogMode,
 } from '@/types';
 
 const props = defineProps<{
@@ -36,10 +37,28 @@ const props = defineProps<{
     initialValues: ClinicalLogFormInput;
     action: { url: string; method: 'post' | 'put' };
     submitLabel: string;
+    remembersMode?: boolean;
 }>();
 
 const page = usePage();
 const student = computed(() => page.props.auth.user);
+
+const modeStorageKey = 'clinical-hours.mode';
+
+const modes = [
+    {
+        value: 'log_form',
+        Icon: ClipboardList,
+        label: 'Log form',
+        description: 'Log every session for the PDF form',
+    },
+    {
+        value: 'simple',
+        Icon: Clock,
+        label: 'Simple',
+        description: 'Just key in the total hours',
+    },
+] as const;
 
 const years = ['1', '2', '3', '4'];
 const semesters = ['1', '2'];
@@ -71,12 +90,54 @@ if (form.entries.length === 0) {
     form.entries.push(blankEntry());
 }
 
-const totalMinutes = computed(() =>
+const isSimple = computed(() => form.mode === 'simple');
+
+const loggedSessionsToRemove = computed(() =>
+    isSimple.value && props.initialValues.mode === 'log_form'
+        ? props.initialValues.entries.length
+        : 0,
+);
+
+onMounted(() => {
+    if (!props.remembersMode) {
+        return;
+    }
+
+    try {
+        const storedMode = localStorage.getItem(modeStorageKey);
+
+        if (storedMode === 'log_form' || storedMode === 'simple') {
+            form.mode = storedMode;
+        }
+    } catch {
+        // Storage can be unavailable (e.g. private browsing), so keep the default mode.
+    }
+});
+
+function selectMode(mode: ClinicalLogMode): void {
+    form.mode = mode;
+
+    if (!props.remembersMode) {
+        return;
+    }
+
+    try {
+        localStorage.setItem(modeStorageKey, mode);
+    } catch {
+        // Remembering the mode is only a convenience.
+    }
+}
+
+const sessionsTotalMinutes = computed(() =>
     form.entries.reduce(
         (sum, entry) =>
             sum + Number(entry.hours || 0) * 60 + Number(entry.minutes || 0),
         0,
     ),
+);
+
+const simpleTotalMinutes = computed(
+    () => Number(form.hours || 0) * 60 + Number(form.minutes || 0),
 );
 
 const sessionEndYear = computed(() => {
@@ -123,7 +184,54 @@ function submit(): void {
 
 <template>
     <form class="space-y-6" @submit.prevent="submit">
-        <div class="grid gap-6 xl:grid-cols-3">
+        <div class="space-y-2">
+            <div
+                role="radiogroup"
+                aria-label="Entry mode"
+                class="inline-flex gap-1 rounded-lg bg-muted p-1"
+            >
+                <button
+                    v-for="{ value, Icon, label, description } in modes"
+                    :key="value"
+                    type="button"
+                    role="radio"
+                    :aria-checked="form.mode === value"
+                    :title="description"
+                    :class="[
+                        'flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm transition-colors',
+                        form.mode === value
+                            ? 'bg-background font-medium shadow-xs'
+                            : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
+                    ]"
+                    @click="selectMode(value)"
+                >
+                    <component :is="Icon" class="size-4" />
+                    {{ label }}
+                </button>
+            </div>
+            <p class="text-sm text-muted-foreground">
+                {{
+                    isSimple
+                        ? 'Key in your total hours only. Simple entries count toward your tracker but have no PDF.'
+                        : 'Record each session so you can download the PDF for your supervisor to sign.'
+                }}
+            </p>
+            <p
+                v-if="loggedSessionsToRemove > 0"
+                class="text-sm text-destructive"
+            >
+                Saving in simple mode will remove the
+                {{ loggedSessionsToRemove }} logged
+                {{ loggedSessionsToRemove === 1 ? 'session' : 'sessions' }}
+                on this form.
+            </p>
+            <InputError :message="form.errors.mode" />
+        </div>
+
+        <div
+            class="grid gap-6"
+            :class="isSimple ? 'xl:grid-cols-2' : 'xl:grid-cols-3'"
+        >
             <Card>
                 <CardHeader>
                     <CardTitle>Student clinician</CardTitle>
@@ -234,7 +342,7 @@ function submit(): void {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card v-if="!isSimple">
                 <CardHeader>
                     <CardTitle>Placement</CardTitle>
                     <CardDescription>
@@ -388,11 +496,65 @@ function submit(): void {
                         </Select>
                         <InputError :message="form.errors.hours_type" />
                     </div>
+
+                    <template v-if="isSimple">
+                        <div class="grid gap-2">
+                            <Label for="simple_placement_name">
+                                Placement
+                                <span class="font-normal text-muted-foreground">
+                                    (optional)
+                                </span>
+                            </Label>
+                            <Input
+                                id="simple_placement_name"
+                                v-model="form.placement_name"
+                                placeholder="e.g. Klinik Pertuturan UKM"
+                                :aria-invalid="!!form.errors.placement_name"
+                            />
+                            <InputError :message="form.errors.placement_name" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="grid gap-2">
+                                <Label for="simple_hours">Hours</Label>
+                                <Input
+                                    id="simple_hours"
+                                    v-model="form.hours"
+                                    type="number"
+                                    min="0"
+                                    max="9999"
+                                    :aria-invalid="!!form.errors.hours"
+                                />
+                                <InputError :message="form.errors.hours" />
+                            </div>
+
+                            <div class="grid gap-2">
+                                <Label for="simple_minutes">Minutes</Label>
+                                <Input
+                                    id="simple_minutes"
+                                    v-model="form.minutes"
+                                    type="number"
+                                    min="0"
+                                    max="59"
+                                    step="5"
+                                    :aria-invalid="!!form.errors.minutes"
+                                />
+                                <InputError :message="form.errors.minutes" />
+                            </div>
+                        </div>
+
+                        <p class="text-sm text-muted-foreground">
+                            Total
+                            <span class="font-medium text-foreground">
+                                {{ formatDuration(simpleTotalMinutes) }}
+                            </span>
+                        </p>
+                    </template>
                 </CardContent>
             </Card>
         </div>
 
-        <Card>
+        <Card v-if="!isSimple">
             <CardHeader>
                 <CardTitle>Sessions</CardTitle>
                 <CardDescription>
@@ -610,7 +772,7 @@ function submit(): void {
                                     Total
                                 </td>
                                 <td colspan="3" class="px-2 py-3">
-                                    {{ formatDuration(totalMinutes) }}
+                                    {{ formatDuration(sessionsTotalMinutes) }}
                                 </td>
                             </tr>
                         </tfoot>

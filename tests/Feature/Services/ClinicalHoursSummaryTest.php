@@ -58,3 +58,15 @@ test('hours are grouped by year and semester, with latihan industri under intern
     expect($periods['internship']['minutes'])->toBe(['observation' => 0, 'hands_on' => 125 * 60]);
     expect($periods['y3s2']['minutes'])->toBe(['observation' => 0, 'hands_on' => 0]);
 });
+
+test('hours keyed in on simple forms are added to the log form totals', function () {
+    $user = User::factory()->create();
+    $logForm = ClinicalLogForm::factory()->for($user)->handsOn()->create(['year' => 2, 'semester' => 1]);
+    ClinicalLogEntry::factory()->for($logForm, 'form')->create(['duration_minutes' => 60]);
+    ClinicalLogForm::factory()->for($user)->handsOn()->simple(150)->create(['year' => 2, 'semester' => 1]);
+
+    $summary = summarizeFor($user);
+
+    expect($summary['totals']['hands_on'])->toBe(210);
+    expect(collect($summary['periods'])->keyBy('key')['y2s1']['minutes'])->toBe(['observation' => 0, 'hands_on' => 210]);
+});

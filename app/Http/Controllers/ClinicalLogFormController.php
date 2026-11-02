@@ -41,6 +41,7 @@ class ClinicalLogFormController extends Controller
             'summary' => $summary->summarize($forms),
             'forms' => $forms->map(fn (ClinicalLogForm $form): array => [
                 'id' => $form->id,
+                'mode' => $form->mode->value,
                 'year' => $form->year,
                 'semester' => $form->semester,
                 'session' => $form->sessionLabel(),
@@ -50,7 +51,7 @@ class ClinicalLogFormController extends Controller
                 'hours_type' => $form->hours_type->value,
                 'hours_type_label' => $form->hours_type->label(),
                 'entries_count' => $form->entries_count,
-                'total_minutes' => (int) $form->entries_sum_duration_minutes,
+                'total_minutes' => $form->totalMinutes(),
             ]),
         ]);
     }
@@ -66,7 +67,7 @@ class ClinicalLogFormController extends Controller
     }
 
     /**
-     * Store a new log form with its sessions.
+     * Store a new log form with its sessions, or the hours keyed in on a simple form.
      */
     public function store(ClinicalLogFormRequest $request): RedirectResponse
     {
@@ -94,16 +95,19 @@ class ClinicalLogFormController extends Controller
             'options' => $this->options(),
             'form' => [
                 'id' => $clinicalLogForm->id,
+                'mode' => $clinicalLogForm->mode->value,
                 'year' => $clinicalLogForm->year,
                 'semester' => $clinicalLogForm->semester,
                 'session_start_year' => $clinicalLogForm->session_start_year,
-                'days' => $clinicalLogForm->days,
-                'placement' => $clinicalLogForm->placement->value,
-                'clinic_mode' => $clinicalLogForm->clinic_mode->value,
-                'placement_name' => $clinicalLogForm->placement_name,
-                'supervisor_name' => $clinicalLogForm->supervisor_name,
+                'days' => $clinicalLogForm->days ?? [],
+                'placement' => $clinicalLogForm->placement?->value ?? '',
+                'clinic_mode' => $clinicalLogForm->clinic_mode?->value ?? '',
+                'placement_name' => $clinicalLogForm->placement_name ?? '',
+                'supervisor_name' => $clinicalLogForm->supervisor_name ?? '',
                 'practicum_type' => $clinicalLogForm->practicum_type->value,
                 'hours_type' => $clinicalLogForm->hours_type->value,
+                'hours' => intdiv((int) $clinicalLogForm->simple_minutes, 60),
+                'minutes' => (int) $clinicalLogForm->simple_minutes % 60,
                 'entries' => $clinicalLogForm->entries->map(fn (ClinicalLogEntry $entry): array => [
                     'date' => $entry->date->toDateString(),
                     'age_group' => $entry->age_group->value,
@@ -119,7 +123,7 @@ class ClinicalLogFormController extends Controller
     }
 
     /**
-     * Update a log form and replace its sessions.
+     * Update a log form and replace its sessions, clearing them when switched to simple mode.
      */
     public function update(ClinicalLogFormRequest $request, ClinicalLogForm $clinicalLogForm): RedirectResponse
     {

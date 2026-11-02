@@ -29,7 +29,8 @@ class ClinicalHoursSummary
     /**
      * Summarize completed minutes per hours type and per tracker period.
      *
-     * Each form must be loaded with `withSum('entries', 'duration_minutes')`.
+     * Each form must be loaded with `withSum('entries', 'duration_minutes')`, so log
+     * form totals are available alongside the hours keyed in on simple forms.
      *
      * @param  Collection<int, ClinicalLogForm>  $forms
      * @return array{
@@ -43,7 +44,7 @@ class ClinicalHoursSummary
         $periodMinutes = array_map(fn (): array => $this->emptyMinutes(), self::PERIODS);
 
         foreach ($forms as $form) {
-            $periodMinutes[$this->periodKey($form)][$form->hours_type->value] += (int) $form->entries_sum_duration_minutes;
+            $periodMinutes[$this->periodKey($form)][$form->hours_type->value] += $form->totalMinutes();
         }
 
         $totals = [];

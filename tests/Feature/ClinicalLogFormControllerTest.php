@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ClinicalHours\HoursType;
+use App\Enums\ClinicalHours\LogMode;
 use App\Models\ClinicalLogEntry;
 use App\Models\ClinicalLogForm;
 use App\Models\User;
@@ -12,6 +13,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 function validLogFormPayload(array $overrides = []): array
 {
     return [
+        'mode' => 'log_form',
         'year' => 3,
         'semester' => 1,
         'session_start_year' => 2021,
@@ -38,6 +40,24 @@ function validLogFormPayload(array $overrides = []): array
     ];
 }
 
+/**
+ * @return array<string, mixed>
+ */
+function validSimplePayload(array $overrides = []): array
+{
+    return [
+        'mode' => 'simple',
+        'year' => 2,
+        'semester' => 2,
+        'session_start_year' => 2022,
+        'practicum_type' => 'screening',
+        'hours_type' => 'observation',
+        'hours' => 12,
+        'minutes' => 30,
+        ...$overrides,
+    ];
+}
+
 test('guests are redirected to the login page', function () {
     $this->get(route('clinical-hours.index'))->assertRedirect(route('login'));
 });
@@ -57,6 +77,20 @@ describe('index', function () {
                 ->where('forms.0.id', $form->id)
                 ->where('forms.0.total_minutes', 150)
                 ->where('summary.totals.observation', 150),
+            );
+    });
+
+    test('it counts the hours keyed in on simple forms', function () {
+        $user = User::factory()->create();
+        $form = ClinicalLogForm::factory()->for($user)->observation()->simple(200)->create();
+
+        $this->actingAs($user)
+            ->get(route('clinical-hours.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('forms.0.id', $form->id)
+                ->where('forms.0.mode', 'simple')
+                ->where('forms.0.total_minutes', 200)
+                ->where('summary.totals.observation', 200),
             );
     });
 });
@@ -107,6 +141,37 @@ describe('store', function () {
             ->assertSessionHasErrors('entries.0.minutes');
     });
 
+    test('it saves keyed-in hours in simple mode without placement details or sessions', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('clinical-hours.store'), validSimplePayload())
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('clinical-hours.index'));
+
+        $form = $user->clinicalLogForms()->sole();
+        expect($form->mode)->toBe(LogMode::Simple);
+        expect($form->simple_minutes)->toBe(750);
+        expect($form->placement_name)->toBeNull();
+        expect($form->days)->toBeNull();
+        expect($form->entries()->count())->toBe(0);
+    });
+
+    test('it requires a duration in simple mode', function () {
+        $this->actingAs(User::factory()->create())
+            ->post(route('clinical-hours.store'), validSimplePayload(['hours' => 0, 'minutes' => 0]))
+            ->assertSessionHasErrors(['minutes' => 'Enter at least one minute of clinical hours.'])
+            ->assertSessionDoesntHaveErrors(['placement_name', 'supervisor_name', 'days', 'entries']);
+
+        expect(ClinicalLogForm::count())->toBe(0);
+    });
+
+    test('it rejects an unknown mode', function () {
+        $this->actingAs(User::factory()->create())
+            ->post(route('clinical-hours.store'), validLogFormPayload(['mode' => 'quick']))
+            ->assertSessionHasErrors('mode');
+    });
+
     test('it rejects an unknown hours type', function () {
         $this->actingAs(User::factory()->create())
             ->post(route('clinical-hours.store'), validLogFormPayload(['hours_type' => 'clinical']))
@@ -127,6 +192,54 @@ describe('update', function () {
 
         expect($form->refresh()->hours_type)->toBe(HoursType::HandsOn);
         expect($form->entries()->pluck('duration_minutes')->all())->toBe([90]);
+    });
+
+    test('switching a log form to simple mode removes its sessions and placement details', function () {
+        $user = User::factory()->create();
+        $form = ClinicalLogForm::factory()->for($user)->create();
+        ClinicalLogEntry::factory()->for($form, 'form')->count(2)->create();
+
+        $this->actingAs($user)
+            ->put(route('clinical-hours.update', $form), validSimplePayload())
+            ->assertSessionHasNoErrors();
+
+        $form->refresh();
+        expect($form->mode)->toBe(LogMode::Simple);
+        expect($form->simple_minutes)->toBe(750);
+        expect($form->supervisor_name)->toBeNull();
+        expect($form->entries()->count())->toBe(0);
+    });
+
+    test('switching a simple form to log form mode clears the keyed-in hours', function () {
+        $user = User::factory()->create();
+        $form = ClinicalLogForm::factory()->for($user)->simple()->create();
+
+        $this->actingAs($user)
+            ->put(route('clinical-hours.update', $form), validLogFormPayload())
+            ->assertSessionHasNoErrors();
+
+        $form->refresh();
+        expect($form->mode)->toBe(LogMode::LogForm);
+        expect($form->simple_minutes)->toBeNull();
+        expect($form->entries()->pluck('duration_minutes')->all())->toBe([90]);
+    });
+});
+
+describe('edit', function () {
+    test('it splits a simple form\'s minutes into hours and minutes', function () {
+        $user = User::factory()->create();
+        $form = ClinicalLogForm::factory()->for($user)->simple(135)->create();
+
+        $this->actingAs($user)
+            ->get(route('clinical-hours.edit', $form))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('clinical-hours/Edit')
+                ->where('form.mode', 'simple')
+                ->where('form.hours', 2)
+                ->where('form.minutes', 15)
+                ->where('form.placement', '')
+                ->where('form.days', []),
+            );
     });
 });
 

@@ -14,6 +14,8 @@ export type ClinicalLogFormOptions = {
     sessionTypes: SelectOption[];
 };
 
+export type ClinicalLogMode = 'log_form' | 'simple';
+
 export type ClinicalLogEntryInput = {
     date: string;
     age_group: string;
@@ -26,6 +28,7 @@ export type ClinicalLogEntryInput = {
 };
 
 export type ClinicalLogFormInput = {
+    mode: ClinicalLogMode;
     year: number | string;
     semester: number | string;
     session_start_year: number | string;
@@ -37,6 +40,8 @@ export type ClinicalLogFormInput = {
     practicum_type: string;
     hours_type: string;
     entries: ClinicalLogEntryInput[];
+    hours: number | string;
+    minutes: number | string;
 };
 
 export type ClinicalHoursCategory = {
@@ -63,11 +68,12 @@ export type ClinicalHoursSummary = {
 
 export type ClinicalLogFormListItem = {
     id: number;
+    mode: ClinicalLogMode;
     year: number;
     semester: number;
     session: string;
-    placement_name: string;
-    supervisor_name: string;
+    placement_name: string | null;
+    supervisor_name: string | null;
     practicum_type: string;
     hours_type: string;
     hours_type_label: string;

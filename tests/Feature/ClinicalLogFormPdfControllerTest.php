@@ -20,3 +20,10 @@ test('it downloads the log form as a pdf named after the student', function () {
         ->assertDownload('KSP CLINICAL LOG HOURS FORM SEM 1 2122 - OBSERVATION-A180123-SARAH AMINAH-YEAR 3.pdf');
     expect($response->getContent())->toStartWith('%PDF');
 });
+
+test('simple forms have no pdf to download', function () {
+    $user = User::factory()->create();
+    $form = ClinicalLogForm::factory()->for($user)->simple()->create();
+
+    $this->actingAs($user)->get(route('clinical-hours.pdf', $form))->assertNotFound();
+});

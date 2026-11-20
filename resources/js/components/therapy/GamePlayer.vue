@@ -6,14 +6,19 @@ import {
     LoaderCircle,
     Pause,
     Check,
+    HandHelping,
     Volume2,
     VolumeX,
+    X,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import PipMascot from '@/components/PipMascot.vue';
+import TherapyIllustration from '@/components/therapy/TherapyIllustration.vue';
 import { Button } from '@/components/ui/button';
 import { useGameSounds } from '@/composables/useGameSounds';
 import { games } from '@/games';
 import { cn } from '@/lib/utils';
+import { resolveIllustration } from '@/lib/therapyIllustrations';
 import type {
     GameActivity,
     GameCard,
@@ -62,7 +67,14 @@ const praise: Record<string, string[]> = {
     ms: ['Hebat!', 'Bagus!', 'Pandai!', 'Syabas!'],
     en: ['Great job!', 'Well done!', 'Super!', 'Amazing!'],
 };
-const celebrationEmoji = ['🌟', '🎉', '🏆', '🦄', '🚀', '🌈'];
+const celebrationArt = [
+    'Sparkling star',
+    'Celebration',
+    'Trophy',
+    'Unicorn',
+    'Rocket',
+    'Rainbow',
+];
 
 const recorder = props.recorder;
 const stickerBoard = props.stickerBoard;
@@ -309,7 +321,7 @@ type LastAnswer = {
 };
 
 const lastAnswer = ref<LastAnswer | null>(null);
-const celebration = ref<{ emoji: string; message: string } | null>(null);
+const celebration = ref<{ artwork: string; message: string } | null>(null);
 /** The stickers the child can choose from right now, while the reward screen is open. */
 const stickerOffer = ref<string[] | null>(null);
 const isPaused = computed(
@@ -353,9 +365,8 @@ function celebrate(): void {
     const messages = praise[props.activity.language] ?? praise.en;
 
     celebration.value = {
-        emoji: celebrationEmoji[
-            Math.floor(Math.random() * celebrationEmoji.length)
-        ],
+        artwork:
+            celebrationArt[Math.floor(Math.random() * celebrationArt.length)],
         message: messages[Math.floor(Math.random() * messages.length)],
     };
     sounds.playCelebration();
@@ -458,9 +469,9 @@ const progressPercent = computed(() =>
 );
 
 const correctionButtons = [
-    { result: 'correct', label: '✓', title: 'Correct' },
-    { result: 'prompted', label: '🤝', title: 'Correct with prompt' },
-    { result: 'incorrect', label: '✗', title: 'Incorrect' },
+    { result: 'correct', icon: Check, title: 'Correct' },
+    { result: 'prompted', icon: HandHelping, title: 'Correct with prompt' },
+    { result: 'incorrect', icon: X, title: 'Incorrect' },
 ] as const;
 </script>
 
@@ -470,6 +481,10 @@ const correctionButtons = [
             class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-3 py-2"
         >
             <div class="flex min-w-40 flex-1 items-center gap-3">
+                <PipMascot
+                    class="hidden h-11 w-12 shrink-0 sm:block"
+                    title="Pip is cheering you on"
+                />
                 <span class="text-sm font-semibold tabular-nums">
                     {{ Math.min(answeredCount, targetCount) }} /
                     {{ targetCount }}
@@ -519,7 +534,7 @@ const correctionButtons = [
                     "
                     @click="correctLastAnswer(button.result)"
                 >
-                    {{ button.label }}
+                    <component :is="button.icon" class="size-4" />
                 </button>
             </div>
 
@@ -528,7 +543,10 @@ const correctionButtons = [
                 class="flex items-center gap-1 text-sm"
                 :title="`${stickerBoard.stickers.value.length} stickers earned`"
             >
-                <span>{{ stickerBoard.stickers.value.at(-1) ?? '⭐' }}</span>
+                <TherapyIllustration
+                    :symbol="stickerBoard.stickers.value.at(-1) ?? '⭐'"
+                    class="size-8"
+                />
                 <span class="font-semibold tabular-nums">
                     {{ stickerBoard.stickers.value.length }}
                 </span>
@@ -628,7 +646,16 @@ const correctionButtons = [
                 v-else-if="isComplete"
                 class="flex flex-1 flex-col items-center justify-center gap-6 p-6 text-center"
             >
-                <div class="animate-bounce text-8xl">🏆</div>
+                <div class="relative">
+                    <PipMascot
+                        class="w-52 motion-safe:animate-[pip-celebrate_2s_ease-in-out_infinite]"
+                        title="Pip is celebrating your hard work"
+                    />
+                    <TherapyIllustration
+                        word="Trophy"
+                        class="absolute -right-7 bottom-0 size-24 rotate-12"
+                    />
+                </div>
                 <p class="text-3xl font-bold">
                     {{
                         activity.language === 'ms'
@@ -650,15 +677,15 @@ const correctionButtons = [
                                   : 'stickers earned!'
                         }}
                     </p>
-                    <p class="flex flex-wrap justify-center gap-1 text-5xl">
-                        <span
+                    <div class="flex flex-wrap justify-center gap-1">
+                        <TherapyIllustration
                             v-for="(sticker, index) in stickerBoard.stickers
                                 .value"
                             :key="index"
-                        >
-                            {{ sticker }}
-                        </span>
-                    </p>
+                            :symbol="sticker"
+                            class="size-16"
+                        />
+                    </div>
                 </div>
                 <div class="flex flex-wrap justify-center gap-3">
                     <Button variant="outline" size="lg" @click="keepGoing">
@@ -692,9 +719,16 @@ const correctionButtons = [
                     class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/85"
                     aria-live="polite"
                 >
-                    <span class="animate-bounce text-[9rem] leading-none">
-                        {{ celebration.emoji }}
-                    </span>
+                    <div class="relative">
+                        <PipMascot
+                            class="w-60 motion-safe:animate-[pip-celebrate_2s_ease-in-out_infinite]"
+                            title="Pip says well done"
+                        />
+                        <TherapyIllustration
+                            :word="celebration.artwork"
+                            class="absolute -right-7 bottom-0 size-24 rotate-12"
+                        />
+                    </div>
                     <span class="text-4xl font-bold">{{
                         celebration.message
                     }}</span>
@@ -709,44 +743,63 @@ const correctionButtons = [
             >
                 <div
                     v-if="stickerOffer"
-                    class="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-background/90 p-6 text-center"
+                    class="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-background/95 p-4 text-center backdrop-blur-sm sm:gap-6 sm:p-6"
                     role="dialog"
                     aria-label="Choose a sticker"
                 >
-                    <p class="text-4xl font-bold">
+                    <PipMascot
+                        class="h-16 w-20 shrink-0 sm:h-24 sm:w-28"
+                        title="Pip has a little reward for you"
+                    />
+                    <p class="text-2xl font-bold sm:text-4xl">
                         {{
                             activity.language === 'ms'
                                 ? 'Pilih satu pelekat!'
                                 : 'Pick a sticker!'
                         }}
                     </p>
-                    <div class="flex flex-wrap justify-center gap-4">
+                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
                         <button
                             v-for="sticker in stickerOffer"
                             :key="sticker"
                             type="button"
-                            class="flex size-28 items-center justify-center rounded-3xl border-4 border-border bg-background text-7xl shadow-sm transition-transform hover:scale-110 hover:border-primary sm:size-36 sm:text-8xl"
-                            :aria-label="`Sticker ${sticker}`"
+                            class="flex size-24 items-center justify-center rounded-3xl border-4 border-brand-violet/20 bg-brand-soft/60 p-2 shadow-sm transition-transform hover:scale-105 hover:border-brand-violet sm:size-36 dark:bg-brand-indigo/15"
+                            :aria-label="`Choose ${resolveIllustration(sticker).label} sticker`"
                             @click="pickSticker(sticker)"
                         >
-                            {{ sticker }}
+                            <TherapyIllustration
+                                :symbol="sticker"
+                                class="size-full"
+                            />
                         </button>
                     </div>
                     <p
                         v-if="stickerBoard.stickers.value.length"
-                        class="flex max-w-xl flex-wrap justify-center gap-1 text-3xl"
+                        class="flex max-h-20 max-w-xl shrink-0 flex-wrap justify-center gap-1 overflow-y-auto"
                         aria-label="Sticker board"
                     >
-                        <span
+                        <TherapyIllustration
                             v-for="(sticker, index) in stickerBoard.stickers
                                 .value"
                             :key="index"
-                        >
-                            {{ sticker }}
-                        </span>
+                            :symbol="sticker"
+                            class="size-10"
+                        />
                     </p>
                 </div>
             </Transition>
         </main>
     </div>
 </template>
+
+<style scoped>
+@keyframes pip-celebrate {
+    0%,
+    100% {
+        transform: translateY(0) rotate(-3deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(3deg);
+    }
+}
+</style>

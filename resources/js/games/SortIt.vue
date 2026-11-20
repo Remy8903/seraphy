@@ -2,6 +2,7 @@
 import { SkipForward } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import PictureCard from '@/components/therapy/PictureCard.vue';
+import TherapyIllustration from '@/components/therapy/TherapyIllustration.vue';
 import { Button } from '@/components/ui/button';
 import { useGameSounds } from '@/composables/useGameSounds';
 import { categoryIcon, categoryLabel } from '@/lib/therapy';
@@ -225,12 +226,12 @@ function binClasses(category: string): string {
                     :picture="prompt.target"
                     size="md"
                 />
-                <span
+                <TherapyIllustration
                     v-else-if="categoryIcon(category)"
-                    class="text-6xl leading-none"
-                >
-                    {{ categoryIcon(category) }}
-                </span>
+                    :symbol="categoryIcon(category)"
+                    :title="categoryLabel(category)"
+                    class="size-20"
+                />
                 <span class="text-2xl font-bold">
                     {{ categoryLabel(category) }}
                 </span>

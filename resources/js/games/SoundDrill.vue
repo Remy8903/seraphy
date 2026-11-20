@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Check, HandHelping, X } from '@lucide/vue';
 import { onBeforeUnmount, onMounted } from 'vue';
 import PictureCard from '@/components/therapy/PictureCard.vue';
 import { useGameSounds } from '@/composables/useGameSounds';
@@ -21,21 +22,21 @@ const scoreButtons = [
         result: 'correct',
         key: '1',
         label: 'Correct',
-        symbol: '✓',
+        icon: Check,
         classes: 'bg-emerald-600 hover:bg-emerald-700 text-white',
     },
     {
         result: 'prompted',
         key: '2',
         label: 'With prompt',
-        symbol: '🤝',
+        icon: HandHelping,
         classes: 'bg-amber-500 hover:bg-amber-600 text-white',
     },
     {
         result: 'incorrect',
         key: '3',
         label: 'Incorrect',
-        symbol: '✗',
+        icon: X,
         classes: 'bg-rose-600 hover:bg-rose-700 text-white',
     },
 ] as const;
@@ -104,9 +105,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', scoreFromKeyboard));
                     ]"
                     @click="score(button.result)"
                 >
-                    <span class="text-2xl leading-none">{{
-                        button.symbol
-                    }}</span>
+                    <component :is="button.icon" class="size-6" />
                     <span class="text-sm">{{ button.label }}</span>
                 </button>
             </div>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Mic, MicOff, RotateCcw, ShieldCheck, SkipForward } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import PipMascot from '@/components/PipMascot.vue';
+import TherapyIllustration from '@/components/therapy/TherapyIllustration.vue';
 import { Button } from '@/components/ui/button';
 import { useGameSounds } from '@/composables/useGameSounds';
 import {
@@ -207,7 +209,16 @@ const microphoneMessage = computed(() => {
             v-if="phase === 'setup'"
             class="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-5 p-6 text-center"
         >
-            <span class="text-8xl leading-none">🎈</span>
+            <div class="relative">
+                <PipMascot
+                    class="h-36 w-40"
+                    title="Pip is ready to cheer on your voice"
+                />
+                <TherapyIllustration
+                    word="Balloon"
+                    class="absolute -top-2 -right-8 size-20 -rotate-12"
+                />
+            </div>
             <div
                 class="flex items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-left text-sm text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100"
             >
@@ -257,9 +268,10 @@ const microphoneMessage = computed(() => {
             class="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center"
             aria-live="polite"
         >
-            <span class="text-8xl leading-none">
-                {{ phase === 'quiet' ? '🤫' : '🗣️' }}
-            </span>
+            <TherapyIllustration
+                :word="phase === 'quiet' ? 'Quiet voice' : 'Speaking voice'"
+                class="size-36"
+            />
             <p class="text-3xl font-bold">
                 <template v-if="phase === 'quiet'">
                     {{ isMalay ? 'Senyap sekejap…' : 'Stay quiet…' }}
@@ -304,25 +316,23 @@ const microphoneMessage = computed(() => {
             <div
                 class="relative flex-1 overflow-hidden rounded-3xl bg-gradient-to-b from-sky-200 to-sky-50 dark:from-sky-900 dark:to-sky-950"
             >
-                <span
-                    class="absolute top-4 left-1/2 -translate-x-1/2 text-5xl"
+                <TherapyIllustration
+                    word="Cloud"
+                    class="absolute top-4 left-1/2 w-28 -translate-x-1/2"
                     aria-hidden="true"
-                >
-                    ☁️
-                </span>
-                <span
-                    class="absolute left-1/2 text-[7rem] leading-none transition-[bottom] duration-100 sm:text-[9rem]"
+                />
+                <TherapyIllustration
+                    word="Balloon"
+                    class="absolute left-1/2 w-36 transition-[bottom] duration-100 sm:w-44"
                     :class="{
-                        'animate-bounce': phase === 'done',
+                        'motion-safe:animate-bounce': phase === 'done',
                     }"
                     :style="{
                         bottom: `calc(${height * 75}% + 0.5rem)`,
                         transform: 'translateX(-50%)',
                     }"
                     aria-hidden="true"
-                >
-                    🎈
-                </span>
+                />
                 <p
                     v-if="phase === 'done'"
                     class="absolute inset-x-0 top-1/3 text-center text-4xl font-bold"

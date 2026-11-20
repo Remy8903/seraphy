@@ -3,6 +3,7 @@ import { ImageOff, ImagePlus } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import PrivacyNotice from '@/components/therapy/PrivacyNotice.vue';
+import TherapyIllustration from '@/components/therapy/TherapyIllustration.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -110,10 +111,10 @@ function clear(): void {
                     />
                     <div class="absolute inset-0 -z-10 bg-background/40" />
                     <div
-                        class="flex size-20 items-center justify-center rounded-2xl border-4 border-border bg-background text-5xl shadow-sm"
+                        class="flex size-24 items-center justify-center rounded-2xl border-4 border-border bg-background p-2 shadow-sm"
                         aria-hidden="true"
                     >
-                        🍎
+                        <TherapyIllustration word="Apple" class="size-full" />
                     </div>
                 </template>
                 <p

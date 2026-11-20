@@ -11,7 +11,9 @@ import { edit as editLogForm } from '@/actions/App/Http/Controllers/ClinicalLogF
 import { update } from '@/actions/App/Http/Controllers/PlaySessionController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import PipMascot from '@/components/PipMascot.vue';
 import PictureCard from '@/components/therapy/PictureCard.vue';
+import TherapyIllustration from '@/components/therapy/TherapyIllustration.vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -159,7 +161,10 @@ const startedAt = new Date(props.session.started_at).toLocaleString(undefined, {
             class="flex items-center gap-4 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100"
             role="status"
         >
-            <span class="animate-bounce text-5xl leading-none">🏆</span>
+            <PipMascot
+                class="h-20 w-24 shrink-0"
+                title="Pip is celebrating a goal achieved"
+            />
             <div>
                 <p class="text-lg font-semibold">
                     {{
@@ -233,7 +238,16 @@ const startedAt = new Date(props.session.started_at).toLocaleString(undefined, {
                                     class="border-b last:border-0"
                                 >
                                     <td class="py-2 pr-2 font-medium">
-                                        {{ categoryIcon(group.category) }}
+                                        <TherapyIllustration
+                                            v-if="categoryIcon(group.category)"
+                                            :symbol="
+                                                categoryIcon(group.category)
+                                            "
+                                            :title="
+                                                categoryLabel(group.category)
+                                            "
+                                            class="mr-1 inline-block size-8 align-middle"
+                                        />
                                         {{ categoryLabel(group.category) }}
                                     </td>
                                     <td
@@ -569,15 +583,15 @@ const startedAt = new Date(props.session.started_at).toLocaleString(undefined, {
                     </CardHeader>
                     <CardContent>
                         <p
-                            class="flex flex-wrap gap-1 text-4xl"
+                            class="flex flex-wrap gap-1"
                             aria-label="Sticker board"
                         >
-                            <span
+                            <TherapyIllustration
                                 v-for="(sticker, index) in session.stickers"
                                 :key="index"
-                            >
-                                {{ sticker }}
-                            </span>
+                                :symbol="sticker"
+                                class="size-14"
+                            />
                         </p>
                     </CardContent>
                 </Card>

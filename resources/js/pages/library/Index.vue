@@ -10,6 +10,7 @@ import {
 } from '@/actions/App/Http/Controllers/ContentItemController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import IllustrationPicker from '@/components/therapy/IllustrationPicker.vue';
 import PictureCard from '@/components/therapy/PictureCard.vue';
 import PrivacyNotice from '@/components/therapy/PrivacyNotice.vue';
 import { Badge } from '@/components/ui/badge';
@@ -332,9 +333,9 @@ const itemToDelete = ref<LibraryItem | null>(null);
                             {{ editingItem ? 'Edit word' : 'Add word' }}
                         </DialogTitle>
                         <DialogDescription>
-                            Use an emoji or upload a picture. Tag the target
-                            sound so you can find the word when building
-                            activities.
+                            Choose an illustration from Pip’s world or upload a
+                            picture. Tag the target sound so you can find the
+                            word when building activities.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -375,13 +376,11 @@ const itemToDelete = ref<LibraryItem | null>(null);
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="grid gap-2">
-                            <Label for="emoji">Emoji</Label>
-                            <Input
-                                id="emoji"
+                            <Label for="illustration">Illustration</Label>
+                            <IllustrationPicker
+                                id="illustration"
                                 v-model="wordForm.emoji"
-                                placeholder="🪑"
-                                maxlength="16"
-                                :aria-invalid="!!wordForm.errors.emoji"
+                                :invalid="!!wordForm.errors.emoji"
                             />
                             <InputError :message="wordForm.errors.emoji" />
                         </div>

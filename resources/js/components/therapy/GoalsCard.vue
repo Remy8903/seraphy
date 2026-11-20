@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, useForm } from '@inertiajs/vue3';
-import { Pause, Pencil, Play, Plus, Target, Trash2 } from '@lucide/vue';
+import { Pause, Pencil, Play, Plus, Target, Trash2, Trophy } from '@lucide/vue';
 import { ref } from 'vue';
 import {
     destroy,
@@ -204,9 +204,10 @@ function formatDate(date: string): string {
                             v-if="
                                 goal.status === 'achieved' && goal.achieved_at
                             "
-                            class="text-sm font-medium text-emerald-600"
+                            class="flex items-center gap-1.5 text-sm font-medium text-emerald-600"
                         >
-                            🏆 Achieved {{ formatDate(goal.achieved_at) }}
+                            <Trophy class="size-4" />
+                            Achieved {{ formatDate(goal.achieved_at) }}
                         </p>
                         <div
                             v-else-if="goal.status === 'active'"

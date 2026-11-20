@@ -154,11 +154,12 @@ function optionClasses(pictureId: number): string {
                 the sound yourself.
             </template>
             <template v-else-if="clip.hasFailed.value">
-                The sound could not play. Check the volume, tap 🔊 to try again,
-                or make the sound yourself.
+                The sound could not play. Check the volume, tap the sound button
+                to try again, or make the sound yourself.
             </template>
             <template v-else>
-                Clinician: the sound plays by itself. Tap 🔊 to hear it again.
+                Clinician: the sound plays by itself. Tap the sound button to
+                hear it again.
             </template>
             <span class="ml-1 font-medium text-foreground">
                 Answer: {{ prompt.target.word }}

@@ -7,6 +7,7 @@ import {
     Plus,
     Search,
     ShieldCheck,
+    Volume2,
     X,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
@@ -17,6 +18,7 @@ import BackgroundSettings from '@/components/therapy/BackgroundSettings.vue';
 import DirectionsEditor from '@/components/therapy/DirectionsEditor.vue';
 import PictureCard from '@/components/therapy/PictureCard.vue';
 import RewardSettings from '@/components/therapy/RewardSettings.vue';
+import TherapyIllustration from '@/components/therapy/TherapyIllustration.vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -725,7 +727,12 @@ function submit(): void {
                             "
                             @click="toggleGroup(group.category)"
                         >
-                            {{ categoryIcon(group.category) }}
+                            <TherapyIllustration
+                                v-if="categoryIcon(group.category)"
+                                :symbol="categoryIcon(group.category)"
+                                :title="categoryLabel(group.category)"
+                                class="size-7"
+                            />
                             {{ categoryLabel(group.category) }}
                             <span class="text-xs opacity-70">
                                 {{ group.count }}
@@ -837,8 +844,8 @@ function submit(): void {
                         <p class="font-medium">How it plays</p>
                         <p class="text-muted-foreground">
                             Each animal&rsquo;s sound plays by itself, and the
-                            child taps the animal that makes it. Tap 🔊 to play
-                            it again.
+                            child taps the animal that makes it. Tap the sound
+                            button to play it again.
                         </p>
                     </div>
                     <div v-if="isFindIt" class="grid gap-1">
@@ -928,9 +935,11 @@ function submit(): void {
                                 :disabled="selectedIds.has(first.id)"
                                 @click="addPair(first, second)"
                             >
-                                {{ first.emoji }} {{ first.word }}
+                                <PictureCard :picture="first" size="xs" />
+                                {{ first.word }}
                                 <ArrowLeftRight class="size-3" />
-                                {{ second.emoji }} {{ second.word }}
+                                <PictureCard :picture="second" size="xs" />
+                                {{ second.word }}
                             </Button>
                         </div>
                     </div>
@@ -949,13 +958,13 @@ function submit(): void {
                                 size="sm"
                                 @click="addSuggestedStory(story.cards)"
                             >
-                                <span
+                                <PictureCard
                                     v-for="card in story.cards"
                                     :key="card.id"
                                     :title="card.word"
-                                >
-                                    {{ card.emoji }}
-                                </span>
+                                    :picture="card"
+                                    size="xs"
+                                />
                                 {{ story.cards[0]?.word }}…
                             </Button>
                         </div>
@@ -1072,9 +1081,9 @@ function submit(): void {
                                 />
                                 <span
                                     v-if="usesSounds"
-                                    class="text-[10px] text-muted-foreground"
+                                    class="flex items-center gap-1 text-[10px] text-muted-foreground"
                                 >
-                                    🔊 sound
+                                    <Volume2 class="size-3" /> sound
                                 </span>
                                 <span
                                     v-else-if="item.target_sound"

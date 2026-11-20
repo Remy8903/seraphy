@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
+import TherapyIllustration from '@/components/therapy/TherapyIllustration.vue';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -72,7 +73,7 @@ const isOn = computed(() => Number(rewardEvery.value ?? 0) > 0);
                     :aria-checked="stickerSet === set.value"
                     :class="
                         cn(
-                            'rounded-md border px-3 py-1.5 text-left text-sm transition-colors',
+                            'flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-colors',
                             stickerSet === set.value
                                 ? 'border-primary bg-primary/5 ring-1 ring-primary'
                                 : 'hover:bg-muted/50',
@@ -81,8 +82,13 @@ const isOn = computed(() => Number(rewardEvery.value ?? 0) > 0);
                     @click="stickerSet = set.value"
                 >
                     <span class="font-medium">{{ set.label }}</span>
-                    <span class="ml-2" aria-hidden="true">
-                        {{ set.stickers.slice(0, 4).join('') }}
+                    <span class="flex" aria-hidden="true">
+                        <TherapyIllustration
+                            v-for="sticker in set.stickers.slice(0, 4)"
+                            :key="sticker"
+                            :symbol="sticker"
+                            class="size-8"
+                        />
                     </span>
                 </button>
             </div>

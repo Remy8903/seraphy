@@ -130,7 +130,8 @@ function optionClasses(pictureId: number): string {
             <div>
                 <p class="text-xs text-muted-foreground">
                     <template v-if="speakWord && speech.hasVoice.value">
-                        The word is spoken aloud. Tap 🔊 to repeat it.
+                        The word is spoken aloud. Tap the sound button to repeat
+                        it.
                     </template>
                     <template v-else>
                         Clinician: say the word, then let the child find it
